@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio de Sesión</title>
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="static/css/styleLogin.css">
+
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo-container">
+            <img src="static/img/LOGO.png" alt="Logo" class="top-image">
+        </div>
+        <form class="login-form" id="login-form" method="POST" action="/login" autocomplete="off">
+            <h1 class="form-title">Inicio de Sesión</h1>
+            <div class="input-container">
+                <i class="fa-solid fa-user icon"></i>
+                <input class="input" type="text" id="strUsuario" name="strUsuario" placeholder="Usuario" required
+                    autocomplete="off"> 
+            </div>
+            <div class="input-container">
+                <i class="fa-solid fa-lock icon"></i>
+                <input class="input" type="password" id="strContrasenna" name="strContrasenna" placeholder="Contraseña"
+                    required autocomplete="off">
+            </div>
+            <button type="submit" class="submit-btn">Iniciar Sesión</button>
+        </form>
+        <div id="error-message">
+            <p><i class="fa-solid fa-triangle-exclamation"></i> Usuario o contraseña incorrectos.</p>
+        </div>
+    </div>
+
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(errorText);
+                }
+            } catch (error) {
+                Swal.fire({
+                    title: 'Acceso denegado',
+                    text: 'Usuario o contraseña incorrectos.',
+                    icon: 'error',
+                    background: '#1c1c1c',
+                    color: '#fff',
+                    confirmButtonColor: '#d4af37',
+                    iconColor: '#d4af37'
+                });
+            }
+        });
+
+    </script>
+
+</body>
+
+</html>

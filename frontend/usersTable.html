@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lista de Usuarios</title>
+  <!-- Íconos y Fuentes -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="static/css/style.css">
+</head>
+
+<body>
+  <!-- Navbar Vertical -->
+  <div class="navbar">
+    <div class="navbar-brand">
+      <img src="static/img/LOGO.png" alt="Logo Joyería Royal">
+      <h2>H</h2>
+      <h2>LUXURY STORE</h2>
+    </div>
+    <nav>
+      <ul>
+        <li><a href="/admin"><i class="fas fa-file-pdf"></i> Archivos PDFS</a></li>
+        <li><a href="/areas"><i class="fas fa-shield-alt"></i> Áreas</a></li>
+        <li><a href="/users"><i class="fas fa-user"></i> Usuarios</a></li>
+        <li><a href="/permissions"><i class="fas fa-cogs"></i> Permisos</a></li>
+      </ul>
+    </nav>
+    <button id="logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</button>
+  </div>
+
+  <!-- Contenido Principal -->
+  <div class="main-content">
+    <h1>Lista de Usuarios</h1>
+
+    <div class="search-bar">
+      <input type="text" id="search-input" class="search-input" placeholder="Buscar usuario...">
+      <button class="search-btn" id="search-btn">Buscar</button>
+      <button class="create-btn" id="create-btn" data-bs-toggle="modal" data-bs-target="#userModal">Crear Usuario</button>
+    </div>
+
+    <div class="table-container">
+      <table id="users-table">
+        <thead>
+          <tr>
+            <th>Nombre de Usuario</th>
+            <th>Correo Electrónico</th>
+            <th>Contraseña</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- rows-placeholder -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="paginator-container">
+      <button id="prev-page" class="page-btn">Anterior</button>
+      <span id="page-info"></span>
+      <button id="next-page" class="page-btn">Siguiente</button>
+    </div>
+  </div>
+
+  <!-- Modal Registrar Usuario -->
+  <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="userModalLabel">Registrar Usuario</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <form id="user-form">
+            <div class="mb-3">
+              <label class="form-label">Nombre de Usuario</label>
+              <input type="text" class="form-control" id="username" autocomplete="username" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" id="email" autocomplete="email" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Contraseña</label>
+              <input type="password" class="form-control" id="password" autocomplete="current-password" required>
+            </div>
+            <button type="submit" class="btn btn-success">Registrar</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Usuario -->
+  <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editUserModalLabel">Editar Usuario</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <form id="edit-user-form">
+            <input type="hidden" id="edit-user-id" name="user_id">
+            <div class="mb-3">
+              <label class="form-label">Nombre de Usuario</label>
+              <input type="text" class="form-control" id="edit-username" name="str_name_user" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" id="edit-email" name="str_email" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Contraseña</label>
+              <input type="password" class="form-control" id="edit-password" name="str_password" required>
+            </div>
+            <button type="submit" class="btn btn-success">Actualizar</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts: Bootstrap, SweetAlert2 y JavaScript personalizado -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    let currentPage = 1;
+    let totalPages = 1;
+    const usersPerPage = 5;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderUsers(currentPage);
+      document.getElementById("search-input").addEventListener("input", searchUsers);
+      document.getElementById("prev-page").addEventListener("click", () => changePage(-1));
+      document.getElementById("next-page").addEventListener("click", () => changePage(1));
+
+      // Inicializar modal de crear usuario
+      handleUserModal();
+
+      // Verificar existencia del botón crear
+      const createBtn = document.getElementById("create-btn");
+      if (createBtn) {
+        createBtn.addEventListener("click", () => {
+          console.log("Botón 'Crear Usuario' activado");
+        });
+      } else {
+        console.log("Elemento 'create-btn' no encontrado");
+      }
+    });
+
+    async function fetchUsers(page = 1) {
+      try {
+        const response = await fetch(
+          `http://localhost:8000/users_paginated?page=${page}&per_page=${usersPerPage}`
+        );
+        if (!response.ok) throw new Error("Error al obtener los datos.");
+        const data = await response.json();
+        totalPages = data.total_pages;
+        return data.users;
+      } catch (error) {
+        console.error("Error al obtener los datos:", error);
+        document.querySelector("#users-table tbody").innerHTML = `
+          <tr><td colspan="5" style="text-align:center; color:red;">Error cargando usuarios</td></tr>`;
+        return [];
+      }
+    }
+
+    function handleUserModal() {
+      // Obtener el modal de registrar usuario usando Bootstrap
+      const userModalElement = document.getElementById("userModal");
+      const userModal = new bootstrap.Modal(userModalElement);
+
+      // El evento de click para el botón ya está gestionado por data-bs-toggle, 
+      // aquí solo se configura el formulario
+      const userForm = document.getElementById("user-form");
+      userForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const userData = {
+          str_name_user: document.getElementById("username").value,
+          str_password: document.getElementById("password").value
+        };
+        try {
+          const response = await fetch("http://localhost:8000/users/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(userData),
+          });
+          if (response.ok) {
+            const data = await response.json();
+            console.log("Usuario Registrado:", data.message);
+            userModal.hide();
+            userForm.reset();
+            Swal.fire({
+              title: "¡Éxito!",
+              text: "Usuario registrado correctamente.",
+              icon: "success",
+              timer: 2000,
+              showConfirmButton: false,
+            });
+            renderUsers(currentPage);
+          } else {
+            const errorData = await response.json();
+            console.error("Error al registrar el usuario:", errorData.detail);
+            alert("Error al registrar el usuario: " + errorData.detail);
+          }
+        } catch (error) {
+          console.error("Error de red:", error);
+          alert("Hubo un problema al intentar registrar el usuario.");
+        }
+      });
+    }
+
+    async function renderUsers(page) {
+      const users = await fetchUsers(page);
+      const tbody = document.querySelector("#users-table tbody");
+      tbody.innerHTML = "";
+      users.forEach((user) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${user.username}</td>
+          <td>${user.email}</td>
+          <td>${user.password}</td>
+          <td class="action-cell">
+            <button class="action-btn edit-btn" onclick="editUser(${user.id})">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="action-btn delete-btn" onclick="deleteUser(${user.id})">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </td>`;
+        tbody.appendChild(row);
+      });
+      document.getElementById("page-info").textContent = `Página ${currentPage} de ${totalPages}`;
+      document.getElementById("prev-page").disabled = currentPage === 1;
+      document.getElementById("next-page").disabled = currentPage === totalPages;
+    }
+
+    function changePage(direction) {
+      if (
+        (direction === -1 && currentPage > 1) ||
+        (direction === 1 && currentPage < totalPages)
+      ) {
+        currentPage += direction;
+        document.getElementById("search-input").value = "";
+        renderUsers(currentPage);
+      }
+    }
+
+    document.getElementById("logout-btn").onclick = async function () {
+      const response = await fetch("/logout", { method: "POST" });
+      if (response.ok) {
+        window.location.href = "/";
+      }
+    };
+
+    async function searchUsers() {
+      const query = document.getElementById("search-input").value.toLowerCase();
+      if (query.trim() === "") {
+        return renderUsers(currentPage);
+      }
+      try {
+        const response = await fetch(
+          `http://localhost:8000/users_search?query=${encodeURIComponent(query)}`
+        );
+        if (!response.ok) throw new Error("Error al buscar usuarios.");
+        const data = await response.json();
+        const tbody = document.querySelector("#users-table tbody");
+        tbody.innerHTML = "";
+        data.users.forEach((user) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${user.username}</td>
+            <td>${user.email}</td>
+            <td>${user.password}</td>
+            <td class="action-cell">
+              <button class="action-btn edit-btn" onclick="editUser(${user.id})">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="action-btn delete-btn" onclick="deleteUser(${user.id})">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </td>`;
+          tbody.appendChild(row);
+        });
+        document.getElementById("page-info").textContent = `Resultados de búsqueda`;
+        document.getElementById("prev-page").disabled = true;
+        document.getElementById("next-page").disabled = true;
+      } catch (error) {
+        console.error("Error al buscar usuarios:", error);
+      }
+    }
+
+    function editUser(userId) {
+      console.log("Editar usuario con ID:", userId);
+      // Aquí agregar la lógica para editar el usuario
+    }
+
+    function deleteUser(userId) {
+      Swal.fire({
+        title: "¿Estás seguro?",
+        text: "No podrás revertir esta acción.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Sí, eliminar",
+        cancelButtonText: "Cancelar",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({
+            title: "Eliminando...",
+            text: "Por favor, espera.",
+            allowOutsideClick: false,
+            didOpen: () => {
+              Swal.showLoading();
+            },
+          });
+          fetch(`/users/${userId}`, { method: "DELETE" })
+            .then((response) => {
+              if (response.ok) {
+                Swal.fire({
+                  title: "¡Eliminado!",
+                  text: "El usuario ha sido eliminado correctamente.",
+                  icon: "success",
+                  timer: 2000,
+                  showConfirmButton: false,
+                });
+                renderUsers(currentPage);
+              } else {
+                Swal.fire({
+                  title: "Error",
+                  text: "Hubo un problema al eliminar el usuario.",
+                  icon: "error",
+                });
+              }
+            })
+            .catch((error) => {
+              console.error("Error al eliminar el usuario:", error);
+              Swal.fire({
+                title: "Error de conexión",
+                text: "No se pudo conectar con el servidor.",
+                icon: "error",
+              });
+            });
+        }
+      });
+    }
+
+    // Inicializar la tabla de usuarios al cargar el DOM
+    document.addEventListener("DOMContentLoaded", () => {
+      renderUsers(currentPage);
+    });
+  </script>
+</body>
+
+</html>
+  
